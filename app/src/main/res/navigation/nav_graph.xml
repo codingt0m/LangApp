@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/homeFragment">
+
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.example.langapp.ui.HomeFragment">
+        <action
+            android:id="@+id/action_home_to_quiz"
+            app:destination="@id/quizFragment" />
+        <action
+            android:id="@+id/action_home_to_dict"
+            app:destination="@id/dictionaryFragment" />
+        <action
+            android:id="@+id/action_home_to_history"
+            app:destination="@id/historyFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/quizFragment"
+        android:name="com.example.langapp.ui.QuizFragment">
+        <argument
+            android:name="direction"
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/dictionaryFragment"
+        android:name="com.example.langapp.ui.DictionaryFragment" />
+
+    <fragment
+        android:id="@+id/historyFragment"
+        android:name="com.example.langapp.ui.HistoryFragment" />
+</navigation>
