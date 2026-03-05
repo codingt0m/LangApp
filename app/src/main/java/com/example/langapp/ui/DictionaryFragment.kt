@@ -8,14 +8,14 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.langapp.LangApp
 import com.example.langapp.R
-import com.example.langapp.databinding.FragmentDictionaryBinding
+import com.example.langapp.databinding.FragmentDictionnaryBinding
 import com.example.langapp.viewmodel.MainViewModel
 import com.example.langapp.viewmodel.ViewModelFactory
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
-class DictionaryFragment : Fragment(R.layout.fragment_dictionary) {
-    private var _binding: FragmentDictionaryBinding? = null
+class DictionaryFragment : Fragment(R.layout.fragment_dictionnary) {
+    private var _binding: FragmentDictionnaryBinding? = null
     private val binding get() = _binding!!
 
     private val viewModel: MainViewModel by viewModels {
@@ -25,7 +25,7 @@ class DictionaryFragment : Fragment(R.layout.fragment_dictionary) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        _binding = FragmentDictionaryBinding.bind(view)
+        _binding = FragmentDictionnaryBinding.bind(view)
 
         val adapter = WordAdapter { word -> viewModel.deleteWord(word) }
         binding.rvWords.layoutManager = LinearLayoutManager(requireContext())
@@ -42,8 +42,8 @@ class DictionaryFragment : Fragment(R.layout.fragment_dictionary) {
             val fr = binding.etFr.text.toString().trim()
             if (en.isNotEmpty() && fr.isNotEmpty()) {
                 viewModel.addWord(en, fr)
-                binding.etEn.text.clear()
-                binding.etFr.text.clear()
+                binding.etEn.text?.clear()
+                binding.etFr.text?.clear()
             }
         }
     }

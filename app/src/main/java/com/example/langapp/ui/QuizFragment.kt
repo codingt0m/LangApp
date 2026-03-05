@@ -51,7 +51,7 @@ class QuizFragment : Fragment(R.layout.fragment_quiz) {
 
     private fun showNextWord() {
         if (currentIndex < words.size) {
-            binding.etAnswer.text.clear()
+            binding.etAnswer.text?.clear()
             binding.tvFeedback.text = ""
             binding.btnValidate.text = getString(R.string.validate)
 
