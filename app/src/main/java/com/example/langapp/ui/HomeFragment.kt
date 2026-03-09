@@ -23,12 +23,6 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             val action = HomeFragmentDirections.actionHomeToQuiz("FR_EN")
             findNavController().navigate(action)
         }
-        binding.btnDictionary.setOnClickListener {
-            findNavController().navigate(R.id.action_home_to_dict)
-        }
-        binding.btnHistory.setOnClickListener {
-            findNavController().navigate(R.id.action_home_to_history)
-        }
     }
 
     override fun onDestroyView() {

@@ -1,5 +1,6 @@
 package com.example.langapp.ui
 
+import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
@@ -14,6 +15,10 @@ import com.example.langapp.databinding.FragmentQuizBinding
 import com.example.langapp.viewmodel.MainViewModel
 import com.example.langapp.viewmodel.ViewModelFactory
 import kotlinx.coroutines.launch
+import nl.dionsegijn.konfetti.core.Party
+import nl.dionsegijn.konfetti.core.Position
+import nl.dionsegijn.konfetti.core.emitter.Emitter
+import java.util.concurrent.TimeUnit
 
 class QuizFragment : Fragment(R.layout.fragment_quiz) {
     private var _binding: FragmentQuizBinding? = null
@@ -47,6 +52,11 @@ class QuizFragment : Fragment(R.layout.fragment_quiz) {
         binding.btnValidate.setOnClickListener {
             checkAnswer()
         }
+
+        binding.btnAbandon.setOnClickListener {
+            Toast.makeText(context, "Session abandonnée", Toast.LENGTH_SHORT).show()
+            findNavController().popBackStack()
+        }
     }
 
     private fun showNextWord() {
@@ -72,8 +82,21 @@ class QuizFragment : Fragment(R.layout.fragment_quiz) {
         if (userAnswer.equals(correctAnswer, ignoreCase = true)) {
             score++
             binding.tvFeedback.text = getString(R.string.correct_answer)
+            binding.tvFeedback.setTextColor(Color.parseColor("#4CAF50"))
+
+            val party = Party(
+                speed = 0f,
+                maxSpeed = 30f,
+                damping = 0.9f,
+                spread = 360,
+                colors = listOf(0xfce18a, 0xff726d, 0xf4306d, 0xb48def),
+                emitter = Emitter(duration = 100, TimeUnit.MILLISECONDS).max(100),
+                position = Position.Relative(0.5, 0.3)
+            )
+            binding.konfettiView.start(party)
         } else {
             binding.tvFeedback.text = getString(R.string.wrong_answer, correctAnswer)
+            binding.tvFeedback.setTextColor(Color.parseColor("#F44336"))
         }
 
         currentIndex++
