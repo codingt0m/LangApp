@@ -5,7 +5,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.example.langapp.LangApp
@@ -19,7 +19,6 @@ import nl.dionsegijn.konfetti.core.Party
 import nl.dionsegijn.konfetti.core.Position
 import nl.dionsegijn.konfetti.core.emitter.Emitter
 import java.util.concurrent.TimeUnit
-import androidx.fragment.app.activityViewModels
 
 class QuizFragment : Fragment(R.layout.fragment_quiz) {
     private var _binding: FragmentQuizBinding? = null
@@ -42,12 +41,17 @@ class QuizFragment : Fragment(R.layout.fragment_quiz) {
         val listId = arguments?.getString("listId") ?: "all"
         val wordCount = arguments?.getInt("wordCount") ?: 10
 
+        // Désactiver le bouton de validation pendant le chargement
+        binding.btnValidate.isEnabled = false
+
         viewLifecycleOwner.lifecycleScope.launch {
             words = viewModel.getQuizWords(listId, wordCount)
             if (words.isEmpty()) {
                 Toast.makeText(context, "Cette liste est vide", Toast.LENGTH_SHORT).show()
                 findNavController().popBackStack()
             } else {
+                // Réactiver le bouton une fois la liste prête
+                binding.btnValidate.isEnabled = true
                 showNextWord()
             }
         }
@@ -63,6 +67,8 @@ class QuizFragment : Fragment(R.layout.fragment_quiz) {
     }
 
     private fun showNextWord() {
+        if (words.isEmpty()) return
+
         if (currentIndex < words.size) {
             binding.etAnswer.text?.clear()
             binding.tvFeedback.text = ""
@@ -78,6 +84,9 @@ class QuizFragment : Fragment(R.layout.fragment_quiz) {
     }
 
     private fun checkAnswer() {
+        // Sécurité supplémentaire au cas où
+        if (words.isEmpty() || currentIndex >= words.size) return
+
         val currentWord = words[currentIndex]
         val userAnswer = binding.etAnswer.text.toString().trim()
         val correctAnswer = if (direction == "EN_FR") currentWord.fr else currentWord.en
@@ -108,17 +117,17 @@ class QuizFragment : Fragment(R.layout.fragment_quiz) {
     }
 
     private fun endSession() {
-        // ... Dans la méthode où la session est validée et sauvegardée
-
+        // Récupération du nom de la liste pour l'historique
         val listName = arguments?.getString("listName") ?: "Toutes les listes"
 
-// Remplacer l'ancien appel de sauvegarde par :
-        viewModel.saveSession(listName, score, totalMots) // Utilise tes variables locales de score et total
-        viewModel.saveSession(score, words.size)
+        // Sauvegarde unique avec le pseudo (géré par le ViewModel), le nom, le score et le total
+        viewModel.saveSession(listName, score, words.size)
+
         Toast.makeText(context, "Session terminée. Score: $score/${words.size}", Toast.LENGTH_LONG).show()
+
+        // Retour à l'écran précédent
         findNavController().popBackStack()
     }
-
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
