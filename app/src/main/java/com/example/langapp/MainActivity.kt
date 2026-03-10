@@ -20,13 +20,13 @@ class MainActivity : AppCompatActivity() {
             .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         val navController = navHostFragment.navController
 
-        binding.bottomNav.setupWithNavController(navController)
+        binding.bottomNavigation.setupWithNavController(navController)
 
         navController.addOnDestinationChangedListener { _, destination, _ ->
             if (destination.id == R.id.loginFragment) {
-                binding.bottomNav.visibility = View.GONE
+                binding.bottomNavigation.visibility = View.GONE
             } else {
-                binding.bottomNav.visibility = View.VISIBLE
+                binding.bottomNavigation.visibility = View.VISIBLE
             }
         }
     }
