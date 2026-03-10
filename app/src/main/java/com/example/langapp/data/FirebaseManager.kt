@@ -62,7 +62,7 @@ class FirebaseManager {
         awaitClose { listener.remove() }
     }
 
-    suspend fun getRandomWords(listId: String?): List<Word> {
+    suspend fun getRandomWords(listId: String?, limit: Int): List<Word> {
         val query = if (listId == null || listId == "all") {
             db.collection("words")
         } else {
@@ -73,7 +73,7 @@ class FirebaseManager {
         val allWords = snapshot.documents.mapNotNull { doc ->
             doc.toObject(Word::class.java)?.apply { id = doc.id }
         }
-        return allWords.shuffled().take(10)
+        return allWords.shuffled().take(limit)
     }
 
     fun addWord(listId: String, en: String, fr: String) {
@@ -106,6 +106,36 @@ class FirebaseManager {
     fun saveSession(pseudo: String, score: Int, total: Int) {
         if (pseudo.isBlank()) return
         val session = hashMapOf("score" to score, "total" to total, "date" to System.currentTimeMillis())
+        db.collection("users").document(pseudo).collection("sessions").add(session)
+    }
+    fun updateWordList(listId: String, name: String, difficulty: Int) {
+        db.collection("wordLists").document(listId)
+            .update(mapOf("name" to name, "difficulty" to difficulty))
+    }
+
+    fun deleteWordList(listId: String) {
+        // Supprime la liste
+        db.collection("wordLists").document(listId).delete()
+
+        // Supprime tous les mots associés à cette liste
+        db.collection("words").whereEqualTo("listId", listId).get()
+            .addOnSuccessListener { snapshot ->
+                val batch = db.batch()
+                snapshot.documents.forEach { doc ->
+                    batch.delete(doc.reference)
+                }
+                batch.commit()
+            }
+    }
+
+    fun saveSession(pseudo: String, listName: String, score: Int, total: Int) {
+        if (pseudo.isBlank()) return
+        val session = hashMapOf(
+            "listName" to listName,
+            "score" to score,
+            "total" to total,
+            "date" to System.currentTimeMillis()
+        )
         db.collection("users").document(pseudo).collection("sessions").add(session)
     }
 }

@@ -67,7 +67,7 @@
                     android:layout_marginBottom="16dp"/>
 
                 <TextView
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Choisissez une liste :"
                     android:layout_marginBottom="8dp"/>
@@ -76,22 +76,82 @@
                     android:id="@+id/spinnerLists"
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
-                    android:layout_marginBottom="24dp"/>
+                    android:layout_marginBottom="16dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Nombre de mots :"
+                    android:layout_marginBottom="8dp"/>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="24dp">
+
+                    <ImageButton
+                        android:id="@+id/btnMinus"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:src="@android:drawable/ic_media_rew"
+                        android:contentDescription="Moins"
+                        app:tint="?attr/colorPrimary"/>
+
+                    <TextView
+                        android:id="@+id/tvWordCount"
+                        android:layout_width="48dp"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="10"
+                        android:textSize="20sp"
+                        android:textStyle="bold"/>
+
+                    <ImageButton
+                        android:id="@+id/btnPlus"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:src="@android:drawable/ic_media_ff"
+                        android:contentDescription="Plus"
+                        app:tint="?attr/colorPrimary"/>
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Sens de traduction :"
+                    android:layout_marginBottom="8dp"/>
+
+                <RadioGroup
+                    android:id="@+id/rgDirection"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginBottom="24dp">
+
+                    <RadioButton
+                        android:id="@+id/rbEnFr"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/en_to_fr"
+                        android:checked="true" />
+
+                    <RadioButton
+                        android:id="@+id/rbFrEn"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/fr_to_en" />
+                </RadioGroup>
 
                 <Button
-                    android:id="@+id/btnEnToFr"
-                    android:layout_width="match_parent"
-                    android:layout_height="60dp"
-                    android:layout_marginBottom="16dp"
-                    app:cornerRadius="16dp"
-                    android:text="@string/en_to_fr" />
-
-                <Button
-                    android:id="@+id/btnFrToEn"
+                    android:id="@+id/btnStartQuiz"
                     android:layout_width="match_parent"
                     android:layout_height="60dp"
                     app:cornerRadius="16dp"
-                    android:text="@string/fr_to_en" />
+                    android:text="Lancer le quiz" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 

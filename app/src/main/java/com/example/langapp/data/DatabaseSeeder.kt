@@ -1,5 +1,6 @@
 package com.example.langapp.data
 
+import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
 
 object DatabaseSeeder {
@@ -78,5 +79,11 @@ object DatabaseSeeder {
         }
 
         batch.commit()
+            .addOnSuccessListener {
+                Log.d("DatabaseSeeder", "Base de données remplie avec succès avec les jeux de tests.")
+            }
+            .addOnFailureListener { e ->
+                Log.e("DatabaseSeeder", "Erreur lors du remplissage de la base de données", e)
+            }
     }
 }

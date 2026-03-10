@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
-
 class MainViewModel(private val firebaseManager: FirebaseManager) : ViewModel() {
 
     private val _pseudo = MutableStateFlow("")
@@ -45,11 +44,19 @@ class MainViewModel(private val firebaseManager: FirebaseManager) : ViewModel() 
         firebaseManager.deleteWord(word.id)
     }
 
-    fun saveSession(score: Int, total: Int) {
-        firebaseManager.saveSession(_pseudo.value, score, total)
+    fun saveSession(listName: String, score: Int, total: Int) {
+        firebaseManager.saveSession(_pseudo.value, listName, score, total)
     }
 
-    suspend fun getQuizWords(listId: String): List<Word> {
-        return firebaseManager.getRandomWords(listId)
+    suspend fun getQuizWords(listId: String, limit: Int): List<Word> {
+        return firebaseManager.getRandomWords(listId, limit)
     }
+    fun updateWordList(listId: String, name: String, difficulty: Int) {
+        firebaseManager.updateWordList(listId, name, difficulty)
+    }
+
+    fun deleteWordList(listId: String) {
+        firebaseManager.deleteWordList(listId)
+    }
+
 }

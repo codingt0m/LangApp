@@ -37,11 +37,13 @@ class QuizFragment : Fragment(R.layout.fragment_quiz) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentQuizBinding.bind(view)
+
         direction = arguments?.getString("direction") ?: "EN_FR"
         val listId = arguments?.getString("listId") ?: "all"
+        val wordCount = arguments?.getInt("wordCount") ?: 10
 
         viewLifecycleOwner.lifecycleScope.launch {
-            words = viewModel.getQuizWords(listId)
+            words = viewModel.getQuizWords(listId, wordCount)
             if (words.isEmpty()) {
                 Toast.makeText(context, "Cette liste est vide", Toast.LENGTH_SHORT).show()
                 findNavController().popBackStack()
@@ -106,6 +108,12 @@ class QuizFragment : Fragment(R.layout.fragment_quiz) {
     }
 
     private fun endSession() {
+        // ... Dans la méthode où la session est validée et sauvegardée
+
+        val listName = arguments?.getString("listName") ?: "Toutes les listes"
+
+// Remplacer l'ancien appel de sauvegarde par :
+        viewModel.saveSession(listName, score, totalMots) // Utilise tes variables locales de score et total
         viewModel.saveSession(score, words.size)
         Toast.makeText(context, "Session terminée. Score: $score/${words.size}", Toast.LENGTH_LONG).show()
         findNavController().popBackStack()
