@@ -2,7 +2,7 @@
     <string name="app_name">LangApp</string>
     <string name="en_to_fr">Anglais -> Français</string>
     <string name="fr_to_en">Français -> Anglais</string>
-    <string name="dictionary">Dictionnaire</string>
+    <string name="dictionary">Listes de mots</string>
     <string name="history">Historique</string>
     <string name="add_word">Ajouter</string>
     <string name="word_en">Mot (EN)</string>

@@ -38,11 +38,12 @@ class QuizFragment : Fragment(R.layout.fragment_quiz) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentQuizBinding.bind(view)
         direction = arguments?.getString("direction") ?: "EN_FR"
+        val listId = arguments?.getString("listId") ?: "all"
 
         viewLifecycleOwner.lifecycleScope.launch {
-            words = viewModel.getQuizWords()
+            words = viewModel.getQuizWords(listId)
             if (words.isEmpty()) {
-                Toast.makeText(context, "Dictionnaire vide", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Cette liste est vide", Toast.LENGTH_SHORT).show()
                 findNavController().popBackStack()
             } else {
                 showNextWord()

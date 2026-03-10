@@ -3,6 +3,7 @@ package com.example.langapp.ui
 import android.content.Context
 import android.os.Bundle
 import android.view.View
+import android.widget.ArrayAdapter
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
@@ -22,6 +23,8 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         ViewModelFactory((requireActivity().application as LangApp).firebaseManager)
     }
 
+    private var listIds = mutableListOf<String>()
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentHomeBinding.bind(view)
@@ -29,6 +32,22 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.pseudo.collect { pseudo ->
                 binding.tvWelcome.text = "Bienvenue, $pseudo !"
+            }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.allLists.collect { lists ->
+                val displayNames = mutableListOf("Tout")
+                listIds.clear()
+                listIds.add("all")
+
+                lists.forEach {
+                    displayNames.add("${it.name} (${it.difficulty} étoiles)")
+                    listIds.add(it.id)
+                }
+
+                val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, displayNames)
+                binding.spinnerLists.adapter = adapter
             }
         }
 
@@ -45,7 +64,10 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     }
 
     private fun startQuiz(direction: String) {
-        val action = HomeFragmentDirections.actionHomeToQuiz(direction)
+        val selectedIndex = binding.spinnerLists.selectedItemPosition
+        val selectedListId = if (selectedIndex >= 0) listIds[selectedIndex] else "all"
+
+        val action = HomeFragmentDirections.actionHomeToQuiz(direction, selectedListId)
         findNavController().navigate(action)
     }
 

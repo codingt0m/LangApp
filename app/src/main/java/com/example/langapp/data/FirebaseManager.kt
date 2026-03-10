@@ -7,8 +7,15 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 
+data class WordList(
+    var id: String = "",
+    val name: String = "",
+    val difficulty: Int = 1
+)
+
 data class Word(
     var id: String = "",
+    var listId: String = "",
     val en: String = "",
     val fr: String = ""
 )
@@ -23,6 +30,25 @@ data class SessionHistory(
 class FirebaseManager {
     private val db = FirebaseFirestore.getInstance()
 
+    fun getAllWordLists(): Flow<List<WordList>> = callbackFlow {
+        val listener = db.collection("wordLists")
+            .orderBy("name", Query.Direction.ASCENDING)
+            .addSnapshotListener { snapshot, _ ->
+                if (snapshot != null) {
+                    val lists = snapshot.documents.mapNotNull { doc ->
+                        doc.toObject(WordList::class.java)?.apply { id = doc.id }
+                    }
+                    trySend(lists)
+                }
+            }
+        awaitClose { listener.remove() }
+    }
+
+    fun addWordList(name: String, difficulty: Int) {
+        val list = hashMapOf("name" to name, "difficulty" to difficulty)
+        db.collection("wordLists").add(list)
+    }
+
     fun getAllWords(): Flow<List<Word>> = callbackFlow {
         val listener = db.collection("words")
             .addSnapshotListener { snapshot, _ ->
@@ -36,16 +62,22 @@ class FirebaseManager {
         awaitClose { listener.remove() }
     }
 
-    suspend fun getRandomWords(): List<Word> {
-        val snapshot = db.collection("words").get().await()
+    suspend fun getRandomWords(listId: String?): List<Word> {
+        val query = if (listId == null || listId == "all") {
+            db.collection("words")
+        } else {
+            db.collection("words").whereEqualTo("listId", listId)
+        }
+
+        val snapshot = query.get().await()
         val allWords = snapshot.documents.mapNotNull { doc ->
             doc.toObject(Word::class.java)?.apply { id = doc.id }
         }
         return allWords.shuffled().take(10)
     }
 
-    fun addWord(en: String, fr: String) {
-        val word = hashMapOf("en" to en, "fr" to fr)
+    fun addWord(listId: String, en: String, fr: String) {
+        val word = hashMapOf("listId" to listId, "en" to en, "fr" to fr)
         db.collection("words").add(word)
     }
 

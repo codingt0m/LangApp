@@ -64,6 +64,18 @@
                     android:text="Lancer un Quiz"
                     android:textSize="20sp"
                     android:textStyle="bold"
+                    android:layout_marginBottom="16dp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Choisissez une liste :"
+                    android:layout_marginBottom="8dp"/>
+
+                <Spinner
+                    android:id="@+id/spinnerLists"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
                     android:layout_marginBottom="24dp"/>
 
                 <Button

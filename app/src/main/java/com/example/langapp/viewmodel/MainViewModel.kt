@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.langapp.data.FirebaseManager
 import com.example.langapp.data.SessionHistory
 import com.example.langapp.data.Word
+import com.example.langapp.data.WordList
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -16,6 +17,9 @@ class MainViewModel(private val firebaseManager: FirebaseManager) : ViewModel() 
 
     private val _pseudo = MutableStateFlow("")
     val pseudo: StateFlow<String> = _pseudo
+
+    val allLists = firebaseManager.getAllWordLists()
+        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     val allWords = firebaseManager.getAllWords()
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
@@ -29,8 +33,12 @@ class MainViewModel(private val firebaseManager: FirebaseManager) : ViewModel() 
         _pseudo.value = newPseudo
     }
 
-    fun addWord(en: String, fr: String) {
-        firebaseManager.addWord(en, fr)
+    fun addWordList(name: String, difficulty: Int) {
+        firebaseManager.addWordList(name, difficulty)
+    }
+
+    fun addWord(listId: String, en: String, fr: String) {
+        firebaseManager.addWord(listId, en, fr)
     }
 
     fun deleteWord(word: Word) {
@@ -41,7 +49,7 @@ class MainViewModel(private val firebaseManager: FirebaseManager) : ViewModel() 
         firebaseManager.saveSession(_pseudo.value, score, total)
     }
 
-    suspend fun getQuizWords(): List<Word> {
-        return firebaseManager.getRandomWords()
+    suspend fun getQuizWords(listId: String): List<Word> {
+        return firebaseManager.getRandomWords(listId)
     }
 }

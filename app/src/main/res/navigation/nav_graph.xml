@@ -39,12 +39,16 @@
         <argument
             android:name="direction"
             app:argType="string" />
+        <argument
+            android:name="listId"
+            app:argType="string"
+            android:defaultValue="all" />
     </fragment>
 
     <fragment
         android:id="@+id/dictionaryFragment"
         android:name="com.example.langapp.ui.DictionaryFragment"
-        android:label="Dictionnaire" />
+        android:label="Listes de mots" />
 
     <fragment
         android:id="@+id/historyFragment"
