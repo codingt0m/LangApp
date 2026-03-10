@@ -1,20 +1,18 @@
 package com.example.langapp.ui
 
+import android.content.Context
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
 import android.view.View
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.example.langapp.LangApp
 import com.example.langapp.R
 import com.example.langapp.databinding.FragmentHomeBinding
 import com.example.langapp.viewmodel.MainViewModel
 import com.example.langapp.viewmodel.ViewModelFactory
-
-
+import kotlinx.coroutines.launch
 
 class HomeFragment : Fragment(R.layout.fragment_home) {
     private var _binding: FragmentHomeBinding? = null
@@ -28,25 +26,25 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentHomeBinding.bind(view)
 
-        binding.etPseudo.setText(viewModel.pseudo.value)
-
-        binding.etPseudo.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                viewModel.setPseudo(s.toString().trim())
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.pseudo.collect { pseudo ->
+                binding.tvWelcome.text = "Bienvenue, $pseudo !"
             }
-            override fun afterTextChanged(s: Editable?) {}
-        })
+        }
 
         binding.btnEnToFr.setOnClickListener { startQuiz("EN_FR") }
         binding.btnFrToEn.setOnClickListener { startQuiz("FR_EN") }
+
+        binding.btnLogout.setOnClickListener {
+            val sharedPref = requireActivity().getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
+            sharedPref.edit().remove("PSEUDO").apply()
+
+            viewModel.setPseudo("")
+            findNavController().navigate(HomeFragmentDirections.actionHomeToLogin())
+        }
     }
 
     private fun startQuiz(direction: String) {
-        if (viewModel.pseudo.value.isBlank()) {
-            Toast.makeText(context, "Veuillez entrer un pseudo", Toast.LENGTH_SHORT).show()
-            return
-        }
         val action = HomeFragmentDirections.actionHomeToQuiz(direction)
         findNavController().navigate(action)
     }

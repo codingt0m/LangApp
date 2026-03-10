@@ -24,6 +24,14 @@
             android:textColor="?attr/colorPrimary"
             android:textSize="28sp"
             android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/btnLogout"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Se déconnecter"
+            android:textColor="?attr/colorPrimary" />
     </LinearLayout>
 
     <LinearLayout
@@ -34,23 +42,6 @@
         android:padding="32dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toBottomOf="@id/headerLayout">
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:boxCornerRadiusBottomEnd="16dp"
-            app:boxCornerRadiusBottomStart="16dp"
-            app:boxCornerRadiusTopEnd="16dp"
-            app:boxCornerRadiusTopStart="16dp">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etPseudo"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Entrez votre pseudo"
-                android:inputType="textPersonName" />
-        </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
@@ -67,6 +58,7 @@
                 android:gravity="center">
 
                 <TextView
+                    android:id="@+id/tvWelcome"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Lancer un Quiz"
