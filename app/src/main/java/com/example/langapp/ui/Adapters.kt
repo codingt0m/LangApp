@@ -50,11 +50,15 @@ class HistoryAdapter : ListAdapter<SessionHistory, HistoryAdapter.HistoryViewHol
     inner class HistoryViewHolder(private val binding: ItemHistoryBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(session: SessionHistory) {
             val dateStr = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(Date(session.date))
-            binding.tvSessionDate.text = dateStr
+
+            // Correction ici : utilisez tvDate et tvScore (comme dans le XML)
+            binding.tvDate.text = dateStr
 
             val percentage = if (session.total > 0) (session.score * 100) / session.total else 0
-            binding.tvSessionScore.text = "Score : ${session.score}/${session.total} ($percentage%)"
+            binding.tvScore.text = "Score : ${session.score}/${session.total} ($percentage%)"
 
+            // Si session.listName affiche toujours une erreur, vérifiez que
+            // la classe de données `SessionHistory` contient bien une propriété `listName`.
             binding.tvListName.text = "Liste : ${session.listName}"
         }
     }

@@ -1,20 +1,47 @@
-<fragment
-    android:id="@+id/quizFragment"
-    android:name="com.example.langapp.ui.QuizFragment"
-    android:label="Quiz">
-    <argument
-        android:name="direction"
-        app:argType="string" />
-    <argument
-        android:name="listId"
-        app:argType="string"
-        android:defaultValue="all" />
-    <argument
-        android:name="wordCount"
-        app:argType="integer"
-        android:defaultValue="10" />
-    <argument
-        android:name="listName"
-        app:argType="string"
-        android:defaultValue="Toutes les listes" />
-</fragment>
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/loginFragment">
+
+    <fragment
+        android:id="@+id/loginFragment"
+        android:name="com.example.langapp.ui.LoginFragment"
+        android:label="Login" />
+
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.example.langapp.ui.HomeFragment"
+        android:label="Accueil" />
+
+    <fragment
+        android:id="@+id/dictionaryFragment"
+        android:name="com.example.langapp.ui.DictionaryFragment"
+        android:label="Dico" />
+
+    <fragment
+        android:id="@+id/historyFragment"
+        android:name="com.example.langapp.ui.HistoryFragment"
+        android:label="Historique" />
+
+    <fragment
+        android:id="@+id/quizFragment"
+        android:name="com.example.langapp.ui.QuizFragment"
+        android:label="Quiz">
+        <argument
+            android:name="direction"
+            app:argType="string" />
+        <argument
+            android:name="listId"
+            app:argType="string"
+            android:defaultValue="all" />
+        <argument
+            android:name="wordCount"
+            app:argType="integer"
+            android:defaultValue="10" />
+        <argument
+            android:name="listName"
+            app:argType="string"
+            android:defaultValue="Toutes les listes" />
+    </fragment>
+</navigation>

@@ -29,7 +29,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     }
 
     private var listIds = mutableListOf<String>()
-    private var allListsData = listOf<WordList>() // Pour garder la référence des objets WordList
+    private var allListsData = listOf<WordList>()
     private var allWordsList = listOf<Word>()
     private var wordCount = 10
     private var maxWordsForSelectedList = 0
@@ -105,7 +105,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             sharedPref.edit().remove("PSEUDO").apply()
 
             viewModel.setPseudo("")
-            findNavController().navigate(HomeFragmentDirections.actionHomeToLogin())
+            findNavController().navigate(R.id.loginFragment)
         }
     }
 
@@ -135,8 +135,13 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         val selectedListId = if (selectedIndex >= 0 && listIds.isNotEmpty()) listIds[selectedIndex] else "all"
         val selectedListName = if (selectedListId == "all") "Toutes les listes" else allListsData.find { it.id == selectedListId }?.name ?: "Toutes les listes"
 
-        val action = HomeFragmentDirections.actionHomeToQuiz(direction, selectedListId, wordCount, selectedListName)
-        findNavController().navigate(action)
+        val bundle = Bundle().apply {
+            putString("direction", direction)
+            putString("listId", selectedListId)
+            putInt("wordCount", wordCount)
+            putString("listName", selectedListName)
+        }
+        findNavController().navigate(R.id.quizFragment, bundle)
     }
 
     override fun onDestroyView() {

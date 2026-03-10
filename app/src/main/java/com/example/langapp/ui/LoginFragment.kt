@@ -30,7 +30,7 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
 
         if (!savedPseudo.isNullOrBlank()) {
             viewModel.setPseudo(savedPseudo)
-            findNavController().navigate(LoginFragmentDirections.actionLoginToHome())
+            findNavController().navigate(R.id.homeFragment)
             return
         }
 
@@ -41,7 +41,7 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
             } else {
                 sharedPref.edit().putString("PSEUDO", pseudo).apply()
                 viewModel.setPseudo(pseudo)
-                findNavController().navigate(LoginFragmentDirections.actionLoginToHome())
+                findNavController().navigate(R.id.homeFragment)
             }
         }
     }

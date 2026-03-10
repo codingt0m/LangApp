@@ -22,6 +22,7 @@ data class Word(
 
 data class SessionHistory(
     var id: String = "",
+    val listName: String = "",
     val score: Int = 0,
     val total: Int = 0,
     val date: Long = System.currentTimeMillis()
