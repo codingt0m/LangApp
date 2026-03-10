@@ -13,14 +13,14 @@ import com.example.langapp.viewmodel.MainViewModel
 import com.example.langapp.viewmodel.ViewModelFactory
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import androidx.fragment.app.activityViewModels
 
 class DictionaryFragment : Fragment(R.layout.fragment_dictionnary) {
     private var _binding: FragmentDictionnaryBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel: MainViewModel by viewModels {
-        val app = requireActivity().application as LangApp
-        ViewModelFactory(app.database.wordDao(), app.database.sessionDao())
+    private val viewModel: MainViewModel by activityViewModels {
+        ViewModelFactory((requireActivity().application as LangApp).firebaseManager)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

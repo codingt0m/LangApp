@@ -19,14 +19,14 @@ import nl.dionsegijn.konfetti.core.Party
 import nl.dionsegijn.konfetti.core.Position
 import nl.dionsegijn.konfetti.core.emitter.Emitter
 import java.util.concurrent.TimeUnit
+import androidx.fragment.app.activityViewModels
 
 class QuizFragment : Fragment(R.layout.fragment_quiz) {
     private var _binding: FragmentQuizBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel: MainViewModel by viewModels {
-        val app = requireActivity().application as LangApp
-        ViewModelFactory(app.database.wordDao(), app.database.sessionDao())
+    private val viewModel: MainViewModel by activityViewModels {
+        ViewModelFactory((requireActivity().application as LangApp).firebaseManager)
     }
 
     private var words = listOf<Word>()
