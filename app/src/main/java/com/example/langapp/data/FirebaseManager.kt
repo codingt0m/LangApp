@@ -6,19 +6,21 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
-
-data class WordList(
-    var id: String = "",
-    val name: String = "",
-    val difficulty: Int = 1
-)
+import com.google.firebase.firestore.PropertyName
 
 data class Word(
     var id: String = "",
     var listId: String = "",
     val en: String = "",
     val fr: String = "",
+    @get:PropertyName("isFavorite")
+    @set:PropertyName("isFavorite")
     var isFavorite: Boolean = false
+)
+data class WordList(
+    var id: String = "",
+    val name: String = "",
+    val difficulty: Int = 1
 )
 
 data class SessionHistory(
