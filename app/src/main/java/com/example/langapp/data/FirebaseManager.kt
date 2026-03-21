@@ -17,7 +17,8 @@ data class Word(
     var id: String = "",
     var listId: String = "",
     val en: String = "",
-    val fr: String = ""
+    val fr: String = "",
+    var isFavorite: Boolean = false
 )
 
 data class SessionHistory(
@@ -64,10 +65,10 @@ class FirebaseManager {
     }
 
     suspend fun getRandomWords(listId: String?, limit: Int): List<Word> {
-        val query = if (listId == null || listId == "all") {
-            db.collection("words")
-        } else {
-            db.collection("words").whereEqualTo("listId", listId)
+        val query = when (listId) {
+            null, "all" -> db.collection("words")
+            "favorites" -> db.collection("words").whereEqualTo("isFavorite", true)
+            else -> db.collection("words").whereEqualTo("listId", listId)
         }
 
         val snapshot = query.get().await()
@@ -78,12 +79,16 @@ class FirebaseManager {
     }
 
     fun addWord(listId: String, en: String, fr: String) {
-        val word = hashMapOf("listId" to listId, "en" to en, "fr" to fr)
+        val word = hashMapOf("listId" to listId, "en" to en, "fr" to fr, "isFavorite" to false)
         db.collection("words").add(word)
     }
 
     fun deleteWord(wordId: String) {
         db.collection("words").document(wordId).delete()
+    }
+
+    fun toggleFavorite(wordId: String, isFavorite: Boolean) {
+        db.collection("words").document(wordId).update("isFavorite", isFavorite)
     }
 
     fun getAllSessions(pseudo: String): Flow<List<SessionHistory>> = callbackFlow {
@@ -109,16 +114,15 @@ class FirebaseManager {
         val session = hashMapOf("score" to score, "total" to total, "date" to System.currentTimeMillis())
         db.collection("users").document(pseudo).collection("sessions").add(session)
     }
+
     fun updateWordList(listId: String, name: String, difficulty: Int) {
         db.collection("wordLists").document(listId)
             .update(mapOf("name" to name, "difficulty" to difficulty))
     }
 
     fun deleteWordList(listId: String) {
-        // Supprime la liste
         db.collection("wordLists").document(listId).delete()
 
-        // Supprime tous les mots associés à cette liste
         db.collection("words").whereEqualTo("listId", listId).get()
             .addOnSuccessListener { snapshot ->
                 val batch = db.batch()

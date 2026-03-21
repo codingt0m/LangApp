@@ -40,7 +40,10 @@ class DictionaryFragment : Fragment(R.layout.fragment_dictionnary) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentDictionnaryBinding.bind(view)
 
-        adapterWords = WordAdapter { word -> viewModel.deleteWord(word) }
+        adapterWords = WordAdapter(
+            onDelete = { word -> viewModel.deleteWord(word) },
+            onFavoriteClick = { word -> viewModel.toggleFavorite(word) }
+        )
         binding.rvWords.layoutManager = LinearLayoutManager(requireContext())
         binding.rvWords.adapter = adapterWords
 
@@ -59,6 +62,9 @@ class DictionaryFragment : Fragment(R.layout.fragment_dictionnary) {
 
                 displayNames.add("Toutes les listes")
                 listIds.add("all")
+
+                displayNames.add("Favoris")
+                listIds.add("favorites")
 
                 lists.forEach {
                     displayNames.add("${it.name} (${it.difficulty}★)")
@@ -80,7 +86,7 @@ class DictionaryFragment : Fragment(R.layout.fragment_dictionnary) {
         binding.spinnerTargetList.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 currentListId = listIds[position]
-                binding.btnEditList.visibility = if (currentListId == "all") View.GONE else View.VISIBLE
+                binding.btnEditList.visibility = if (currentListId == "all" || currentListId == "favorites") View.GONE else View.VISIBLE
                 updateRecyclerView()
             }
             override fun onNothingSelected(parent: AdapterView<*>?) {}
@@ -98,7 +104,7 @@ class DictionaryFragment : Fragment(R.layout.fragment_dictionnary) {
             val en = binding.etEn.text.toString().trim()
             val fr = binding.etFr.text.toString().trim()
 
-            if (currentListId == "all") {
+            if (currentListId == "all" || currentListId == "favorites") {
                 Toast.makeText(context, "Veuillez sélectionner une liste spécifique", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
@@ -114,10 +120,10 @@ class DictionaryFragment : Fragment(R.layout.fragment_dictionnary) {
     }
 
     private fun updateRecyclerView() {
-        val filteredList = if (currentListId == "all") {
-            allWordsList
-        } else {
-            allWordsList.filter { it.listId == currentListId }
+        val filteredList = when (currentListId) {
+            "all" -> allWordsList
+            "favorites" -> allWordsList.filter { it.isFavorite }
+            else -> allWordsList.filter { it.listId == currentListId }
         }
         adapterWords.submitList(filteredList)
     }

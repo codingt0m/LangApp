@@ -58,6 +58,9 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 listIds.clear()
                 listIds.add("all")
 
+                displayNames.add("Favoris")
+                listIds.add("favorites")
+
                 lists.forEach {
                     displayNames.add("${it.name} (${it.difficulty} étoiles)")
                     listIds.add(it.id)
@@ -114,10 +117,10 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         val selectedIndex = binding.spinnerLists.selectedItemPosition
         val selectedListId = if (selectedIndex >= 0 && listIds.isNotEmpty()) listIds[selectedIndex] else "all"
 
-        maxWordsForSelectedList = if (selectedListId == "all") {
-            allWordsList.size
-        } else {
-            allWordsList.count { it.listId == selectedListId }
+        maxWordsForSelectedList = when (selectedListId) {
+            "all" -> allWordsList.size
+            "favorites" -> allWordsList.count { it.isFavorite }
+            else -> allWordsList.count { it.listId == selectedListId }
         }
 
         if (maxWordsForSelectedList == 0) {
@@ -134,7 +137,11 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     private fun startQuiz(direction: String, isQcmMode: Boolean) {
         val selectedIndex = binding.spinnerLists.selectedItemPosition
         val selectedListId = if (selectedIndex >= 0 && listIds.isNotEmpty()) listIds[selectedIndex] else "all"
-        val selectedListName = if (selectedListId == "all") "Toutes les listes" else allListsData.find { it.id == selectedListId }?.name ?: "Toutes les listes"
+        val selectedListName = when (selectedListId) {
+            "all" -> "Toutes les listes"
+            "favorites" -> "Favoris"
+            else -> allListsData.find { it.id == selectedListId }?.name ?: "Toutes les listes"
+        }
 
         val bundle = Bundle().apply {
             putString("direction", direction)

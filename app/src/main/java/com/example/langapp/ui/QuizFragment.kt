@@ -3,6 +3,7 @@ package com.example.langapp.ui
 import android.app.AlertDialog
 import android.graphics.Color
 import android.os.Bundle
+import android.os.CountDownTimer
 import android.view.View
 import android.widget.Toast
 import androidx.fragment.app.Fragment
@@ -19,6 +20,7 @@ import kotlinx.coroutines.launch
 import nl.dionsegijn.konfetti.core.Party
 import nl.dionsegijn.konfetti.core.Position
 import nl.dionsegijn.konfetti.core.emitter.Emitter
+import java.text.Normalizer
 import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 
@@ -35,6 +37,7 @@ class QuizFragment : Fragment(R.layout.fragment_quiz) {
     private val wrongWords = mutableListOf<Word>()
     private var currentIndex = 0
     private var score = 0
+    private var currentStreak = 0
     private lateinit var direction: String
     private var hasUsedAlmostCorrect = false
     private var isReviewSession = false
@@ -44,6 +47,11 @@ class QuizFragment : Fragment(R.layout.fragment_quiz) {
     private val choiceButtons by lazy {
         listOf(binding.btnChoice1, binding.btnChoice2, binding.btnChoice3, binding.btnChoice4)
     }
+
+    private var countDownTimer: CountDownTimer? = null
+    private val TIME_LIMIT_MS = 15000L
+    private var timeRemainingMs = TIME_LIMIT_MS
+    private var totalSessionDurationMs = 0L
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -55,6 +63,7 @@ class QuizFragment : Fragment(R.layout.fragment_quiz) {
         isQcmMode = arguments?.getBoolean("isQcmMode") ?: false
 
         binding.btnValidate.isEnabled = false
+        binding.tvStreak.text = "Série : $currentStreak"
 
         viewLifecycleOwner.lifecycleScope.launch {
             words = viewModel.getQuizWords(listId, wordCount)
@@ -73,6 +82,7 @@ class QuizFragment : Fragment(R.layout.fragment_quiz) {
         }
 
         binding.btnAbandon.setOnClickListener {
+            countDownTimer?.cancel()
             Toast.makeText(context, "Session abandonnée", Toast.LENGTH_SHORT).show()
             findNavController().popBackStack()
         }
@@ -80,6 +90,11 @@ class QuizFragment : Fragment(R.layout.fragment_quiz) {
 
     private fun showNextWord() {
         if (words.isEmpty()) return
+
+        countDownTimer?.cancel()
+        timeRemainingMs = TIME_LIMIT_MS
+        binding.tvTimer.text = "${TIME_LIMIT_MS / 1000}s"
+        binding.tvStreak.text = "Série : $currentStreak"
 
         if (currentIndex < words.size) {
             hasUsedAlmostCorrect = false
@@ -96,6 +111,7 @@ class QuizFragment : Fragment(R.layout.fragment_quiz) {
             if (isQcmMode) {
                 binding.textInputLayout.visibility = View.GONE
                 binding.qcmLayout.visibility = View.VISIBLE
+                binding.btnValidate.visibility = View.GONE
                 selectedQcmAnswer = ""
 
                 val correctAnswer = if (direction == "EN_FR") currentWord.fr else currentWord.en
@@ -123,39 +139,101 @@ class QuizFragment : Fragment(R.layout.fragment_quiz) {
                     button.visibility = View.VISIBLE
                     button.text = options[index]
                     button.alpha = 1.0f
+                    button.isEnabled = true
                     button.setOnClickListener {
                         selectedQcmAnswer = options[index]
-                        choiceButtons.forEach { b -> b.alpha = 0.5f }
+                        choiceButtons.forEach { b ->
+                            b.alpha = 0.5f
+                            b.isEnabled = false
+                        }
                         button.alpha = 1.0f
+                        checkAnswer()
                     }
                 }
             } else {
                 binding.textInputLayout.visibility = View.VISIBLE
                 binding.qcmLayout.visibility = View.GONE
+                binding.btnValidate.visibility = View.VISIBLE
             }
 
             binding.btnValidate.setOnClickListener { checkAnswer() }
+            startTimer()
         } else {
             binding.progressBar.progress = words.size
             endSession()
         }
     }
 
+    private fun startTimer() {
+        countDownTimer = object : CountDownTimer(TIME_LIMIT_MS, 1000) {
+            override fun onTick(millisUntilFinished: Long) {
+                timeRemainingMs = millisUntilFinished
+                binding.tvTimer.text = "${millisUntilFinished / 1000}s"
+            }
+
+            override fun onFinish() {
+                timeRemainingMs = 0
+                binding.tvTimer.text = "0s"
+                handleTimeUp()
+            }
+        }.start()
+    }
+
+    private fun handleTimeUp() {
+        if (words.isEmpty() || currentIndex >= words.size) return
+
+        totalSessionDurationMs += TIME_LIMIT_MS
+        currentStreak = 0
+        binding.tvStreak.text = "Série : $currentStreak"
+
+        val currentWord = words[currentIndex]
+
+        if (!wrongWords.contains(currentWord)) {
+            wrongWords.add(currentWord)
+        }
+
+        val correctAnswer = if (direction == "EN_FR") currentWord.fr else currentWord.en
+        binding.tvFeedback.text = getString(R.string.wrong_answer, correctAnswer) + " (Temps écoulé)"
+        binding.tvFeedback.setTextColor(Color.parseColor("#F44336"))
+
+        if (isQcmMode) {
+            choiceButtons.forEach { it.isEnabled = false }
+        }
+
+        currentIndex++
+        binding.btnValidate.visibility = View.VISIBLE
+        binding.btnValidate.text = if (currentIndex < words.size) getString(R.string.next) else getString(R.string.finish)
+        binding.btnValidate.setOnClickListener { showNextWord() }
+    }
+
+    private fun String.removeAccents(): String {
+        val normalized = Normalizer.normalize(this, Normalizer.Form.NFD)
+        return "\\p{InCombiningDiacriticalMarks}+".toRegex().replace(normalized, "")
+    }
+
     private fun checkAnswer() {
         if (words.isEmpty() || currentIndex >= words.size) return
 
-        val currentWord = words[currentIndex]
-        val userAnswer = if (isQcmMode) selectedQcmAnswer else binding.etAnswer.text.toString().trim()
+        countDownTimer?.cancel()
+        totalSessionDurationMs += (TIME_LIMIT_MS - timeRemainingMs)
 
-        if (isQcmMode && userAnswer.isEmpty()) {
+        val currentWord = words[currentIndex]
+        val userAnswerRaw = if (isQcmMode) selectedQcmAnswer else binding.etAnswer.text.toString().trim()
+
+        if (isQcmMode && userAnswerRaw.isEmpty()) {
+            startTimer()
             Toast.makeText(context, getString(R.string.select_answer), Toast.LENGTH_SHORT).show()
             return
         }
 
-        val correctAnswer = if (direction == "EN_FR") currentWord.fr else currentWord.en
+        val correctAnswerRaw = if (direction == "EN_FR") currentWord.fr else currentWord.en
+
+        val userAnswer = userAnswerRaw.removeAccents()
+        val correctAnswer = correctAnswerRaw.removeAccents()
 
         if (userAnswer.equals(correctAnswer, ignoreCase = true)) {
             score++
+            currentStreak++
             binding.tvFeedback.text = getString(R.string.correct_answer)
             binding.tvFeedback.setTextColor(Color.parseColor("#4CAF50"))
 
@@ -171,24 +249,31 @@ class QuizFragment : Fragment(R.layout.fragment_quiz) {
             binding.konfettiView.start(party)
 
             currentIndex++
+            binding.btnValidate.visibility = View.VISIBLE
             binding.btnValidate.text = if (currentIndex < words.size) getString(R.string.next) else getString(R.string.finish)
             binding.btnValidate.setOnClickListener { showNextWord() }
 
         } else if (!isQcmMode && !hasUsedAlmostCorrect && isAlmostCorrect(userAnswer, correctAnswer)) {
             hasUsedAlmostCorrect = true
+            currentStreak = 0
             binding.tvFeedback.text = getString(R.string.almost_correct)
             binding.tvFeedback.setTextColor(Color.parseColor("#FF9800"))
+            startTimer()
         } else {
             if (!wrongWords.contains(currentWord)) {
                 wrongWords.add(currentWord)
             }
-            binding.tvFeedback.text = getString(R.string.wrong_answer, correctAnswer)
+            currentStreak = 0
+            binding.tvFeedback.text = getString(R.string.wrong_answer, correctAnswerRaw)
             binding.tvFeedback.setTextColor(Color.parseColor("#F44336"))
 
             currentIndex++
+            binding.btnValidate.visibility = View.VISIBLE
             binding.btnValidate.text = if (currentIndex < words.size) getString(R.string.next) else getString(R.string.finish)
             binding.btnValidate.setOnClickListener { showNextWord() }
         }
+
+        binding.tvStreak.text = "Série : $currentStreak"
     }
 
     private fun isAlmostCorrect(userAnswer: String, correctAnswer: String): Boolean {
@@ -236,9 +321,11 @@ class QuizFragment : Fragment(R.layout.fragment_quiz) {
     }
 
     private fun endSession() {
+        val durationInSeconds = (totalSessionDurationMs / 1000).toInt()
+
         if (!isReviewSession) {
             val listName = arguments?.getString("listName") ?: "Toutes les listes"
-            viewModel.saveSession(listName, score, words.size)
+            viewModel.saveSession(listName, score, words.size, durationInSeconds)
         }
 
         if (wrongWords.isNotEmpty()) {
@@ -249,13 +336,13 @@ class QuizFragment : Fragment(R.layout.fragment_quiz) {
                     startReviewSession()
                 }
                 .setNegativeButton(getString(R.string.no)) { _, _ ->
-                    Toast.makeText(context, "Session terminée. Score final : $score/${words.size}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, "Session terminée. Score final : $score/${words.size} en ${durationInSeconds}s", Toast.LENGTH_LONG).show()
                     findNavController().popBackStack()
                 }
                 .setCancelable(false)
                 .show()
         } else {
-            Toast.makeText(context, "Session terminée. Sans faute ! Score : $score/${words.size}", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, "Session terminée. Sans faute ! Score : $score/${words.size} en ${durationInSeconds}s", Toast.LENGTH_LONG).show()
             findNavController().popBackStack()
         }
     }
@@ -265,12 +352,15 @@ class QuizFragment : Fragment(R.layout.fragment_quiz) {
         wrongWords.clear()
         currentIndex = 0
         score = 0
+        currentStreak = 0
+        totalSessionDurationMs = 0L
         isReviewSession = true
         showNextWord()
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
+        countDownTimer?.cancel()
         _binding = null
     }
 }

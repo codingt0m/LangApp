@@ -13,7 +13,10 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class WordAdapter(private val onDelete: (Word) -> Unit) : ListAdapter<Word, WordAdapter.WordViewHolder>(WordDiffCallback()) {
+class WordAdapter(
+    private val onDelete: (Word) -> Unit,
+    private val onFavoriteClick: (Word) -> Unit
+) : ListAdapter<Word, WordAdapter.WordViewHolder>(WordDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): WordViewHolder {
         return WordViewHolder(ItemWordBinding.inflate(LayoutInflater.from(parent.context), parent, false))
@@ -28,6 +31,11 @@ class WordAdapter(private val onDelete: (Word) -> Unit) : ListAdapter<Word, Word
             binding.tvEn.text = word.en
             binding.tvFr.text = word.fr
             binding.btnDelete.setOnClickListener { onDelete(word) }
+
+            val starResource = if (word.isFavorite) android.R.drawable.btn_star_big_on else android.R.drawable.btn_star_big_off
+            binding.btnFavorite.setImageResource(starResource)
+
+            binding.btnFavorite.setOnClickListener { onFavoriteClick(word) }
         }
     }
 
@@ -50,15 +58,10 @@ class HistoryAdapter : ListAdapter<SessionHistory, HistoryAdapter.HistoryViewHol
     inner class HistoryViewHolder(private val binding: ItemHistoryBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(session: SessionHistory) {
             val dateStr = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(Date(session.date))
-
-            // Correction ici : utilisez tvDate et tvScore (comme dans le XML)
             binding.tvDate.text = dateStr
 
             val percentage = if (session.total > 0) (session.score * 100) / session.total else 0
             binding.tvScore.text = "Score : ${session.score}/${session.total} ($percentage%)"
-
-            // Si session.listName affiche toujours une erreur, vérifiez que
-            // la classe de données `SessionHistory` contient bien une propriété `listName`.
             binding.tvListName.text = "Liste : ${session.listName}"
         }
     }

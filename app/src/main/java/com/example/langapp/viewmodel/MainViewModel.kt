@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
+
 class MainViewModel(private val firebaseManager: FirebaseManager) : ViewModel() {
 
     private val _pseudo = MutableStateFlow("")
@@ -44,6 +45,10 @@ class MainViewModel(private val firebaseManager: FirebaseManager) : ViewModel() 
         firebaseManager.deleteWord(word.id)
     }
 
+    fun toggleFavorite(word: Word) {
+        firebaseManager.toggleFavorite(word.id, !word.isFavorite)
+    }
+
     fun saveSession(listName: String, score: Int, total: Int) {
         firebaseManager.saveSession(_pseudo.value, listName, score, total)
     }
@@ -51,6 +56,7 @@ class MainViewModel(private val firebaseManager: FirebaseManager) : ViewModel() 
     suspend fun getQuizWords(listId: String, limit: Int): List<Word> {
         return firebaseManager.getRandomWords(listId, limit)
     }
+
     fun updateWordList(listId: String, name: String, difficulty: Int) {
         firebaseManager.updateWordList(listId, name, difficulty)
     }
@@ -58,5 +64,4 @@ class MainViewModel(private val firebaseManager: FirebaseManager) : ViewModel() 
     fun deleteWordList(listId: String) {
         firebaseManager.deleteWordList(listId)
     }
-
 }
