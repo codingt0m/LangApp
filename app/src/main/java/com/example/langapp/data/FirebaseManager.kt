@@ -26,6 +26,7 @@ data class SessionHistory(
     val listName: String = "",
     val score: Int = 0,
     val total: Int = 0,
+    val duration: Int = 0,
     val date: Long = System.currentTimeMillis()
 )
 
@@ -133,12 +134,13 @@ class FirebaseManager {
             }
     }
 
-    fun saveSession(pseudo: String, listName: String, score: Int, total: Int) {
+    fun saveSession(pseudo: String, listName: String, score: Int, total: Int, duration: Int) {
         if (pseudo.isBlank()) return
         val session = hashMapOf(
             "listName" to listName,
             "score" to score,
             "total" to total,
+            "duration" to duration,
             "date" to System.currentTimeMillis()
         )
         db.collection("users").document(pseudo).collection("sessions").add(session)

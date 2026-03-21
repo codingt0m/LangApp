@@ -63,6 +63,7 @@ class HistoryAdapter : ListAdapter<SessionHistory, HistoryAdapter.HistoryViewHol
             val percentage = if (session.total > 0) (session.score * 100) / session.total else 0
             binding.tvScore.text = "Score : ${session.score}/${session.total} ($percentage%)"
             binding.tvListName.text = "Liste : ${session.listName}"
+            binding.tvDuration.text = "Durée : ${session.duration}s"
         }
     }
 

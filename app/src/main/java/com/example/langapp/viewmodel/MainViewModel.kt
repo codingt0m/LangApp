@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 class MainViewModel(private val firebaseManager: FirebaseManager) : ViewModel() {
@@ -19,6 +20,10 @@ class MainViewModel(private val firebaseManager: FirebaseManager) : ViewModel() 
     val pseudo: StateFlow<String> = _pseudo
 
     val allLists = firebaseManager.getAllWordLists()
+        .map { lists ->
+            val favoris = WordList(id = "favorites", name = "Favoris", difficulty = 1)
+            listOf(favoris) + lists
+        }
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     val allWords = firebaseManager.getAllWords()
@@ -49,8 +54,8 @@ class MainViewModel(private val firebaseManager: FirebaseManager) : ViewModel() 
         firebaseManager.toggleFavorite(word.id, !word.isFavorite)
     }
 
-    fun saveSession(listName: String, score: Int, total: Int) {
-        firebaseManager.saveSession(_pseudo.value, listName, score, total)
+    fun saveSession(listName: String, score: Int, total: Int, duration: Int) {
+        firebaseManager.saveSession(_pseudo.value, listName, score, total, duration)
     }
 
     suspend fun getQuizWords(listId: String, limit: Int): List<Word> {

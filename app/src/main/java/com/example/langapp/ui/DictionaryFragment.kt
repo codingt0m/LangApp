@@ -63,11 +63,12 @@ class DictionaryFragment : Fragment(R.layout.fragment_dictionnary) {
                 displayNames.add("Toutes les listes")
                 listIds.add("all")
 
-                displayNames.add("Favoris")
-                listIds.add("favorites")
-
                 lists.forEach {
-                    displayNames.add("${it.name} (${it.difficulty}★)")
+                    if (it.id == "favorites") {
+                        displayNames.add(it.name)
+                    } else {
+                        displayNames.add("${it.name} (${it.difficulty}★)")
+                    }
                     listIds.add(it.id)
                 }
 
@@ -86,7 +87,6 @@ class DictionaryFragment : Fragment(R.layout.fragment_dictionnary) {
         binding.spinnerTargetList.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 currentListId = listIds[position]
-                binding.btnEditList.visibility = if (currentListId == "all" || currentListId == "favorites") View.GONE else View.VISIBLE
                 updateRecyclerView()
             }
             override fun onNothingSelected(parent: AdapterView<*>?) {}
@@ -120,6 +120,8 @@ class DictionaryFragment : Fragment(R.layout.fragment_dictionnary) {
     }
 
     private fun updateRecyclerView() {
+        binding.btnEditList.visibility = if (currentListId == "all" || currentListId == "favorites") View.GONE else View.VISIBLE
+
         val filteredList = when (currentListId) {
             "all" -> allWordsList
             "favorites" -> allWordsList.filter { it.isFavorite }
