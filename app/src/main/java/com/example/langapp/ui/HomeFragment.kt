@@ -97,7 +97,8 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 return@setOnClickListener
             }
             val direction = if (binding.rbEnFr.isChecked) "EN_FR" else "FR_EN"
-            startQuiz(direction)
+            val isQcmMode = binding.switchQcmMode.isChecked
+            startQuiz(direction, isQcmMode)
         }
 
         binding.btnLogout.setOnClickListener {
@@ -130,7 +131,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         binding.tvWordCount.text = wordCount.toString()
     }
 
-    private fun startQuiz(direction: String) {
+    private fun startQuiz(direction: String, isQcmMode: Boolean) {
         val selectedIndex = binding.spinnerLists.selectedItemPosition
         val selectedListId = if (selectedIndex >= 0 && listIds.isNotEmpty()) listIds[selectedIndex] else "all"
         val selectedListName = if (selectedListId == "all") "Toutes les listes" else allListsData.find { it.id == selectedListId }?.name ?: "Toutes les listes"
@@ -140,6 +141,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             putString("listId", selectedListId)
             putInt("wordCount", wordCount)
             putString("listName", selectedListName)
+            putBoolean("isQcmMode", isQcmMode)
         }
         findNavController().navigate(R.id.quizFragment, bundle)
     }
