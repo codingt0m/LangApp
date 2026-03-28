@@ -10,7 +10,9 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.langapp.LangApp
 import com.example.langapp.R
@@ -36,6 +38,8 @@ class DictionaryFragment : Fragment(R.layout.fragment_dictionnary) {
     private var allWordsList = listOf<Word>()
     private lateinit var adapterWords: WordAdapter
 
+    private var pendingSelectedListName: String? = null
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentDictionnaryBinding.bind(view)
@@ -48,38 +52,51 @@ class DictionaryFragment : Fragment(R.layout.fragment_dictionnary) {
         binding.rvWords.adapter = adapterWords
 
         viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.allWords.collectLatest { words ->
-                allWordsList = words
-                updateRecyclerView()
-            }
-        }
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.allLists.collectLatest { lists ->
-                allListsData = lists
-                listIds.clear()
-                val displayNames = mutableListOf<String>()
-
-                displayNames.add("Toutes les listes")
-                listIds.add("all")
-
-                lists.forEach {
-                    if (it.id == "favorites") {
-                        displayNames.add(it.name)
-                    } else {
-                        displayNames.add("${it.name} (${it.difficulty}★)")
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    viewModel.allWords.collectLatest { words ->
+                        allWordsList = words
+                        updateRecyclerView()
                     }
-                    listIds.add(it.id)
                 }
+                launch {
+                    viewModel.allLists.collectLatest { lists ->
+                        if (_binding == null) return@collectLatest
 
-                val adapterSpinner = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, displayNames)
-                binding.spinnerTargetList.adapter = adapterSpinner
+                        allListsData = lists
+                        listIds.clear()
+                        val displayNames = mutableListOf<String>()
 
-                val index = listIds.indexOf(currentListId)
-                if (index >= 0) {
-                    binding.spinnerTargetList.setSelection(index)
-                } else {
-                    binding.spinnerTargetList.setSelection(0)
+                        displayNames.add("Toutes les listes")
+                        listIds.add("all")
+
+                        if (pendingSelectedListName != null) {
+                            val newList = lists.find { it.name == pendingSelectedListName }
+                            if (newList != null) {
+                                currentListId = newList.id
+                                pendingSelectedListName = null
+                            }
+                        }
+
+                        lists.forEach {
+                            if (it.id == "favorites") {
+                                displayNames.add(it.name)
+                            } else {
+                                displayNames.add("${it.name} (${it.difficulty}★)")
+                            }
+                            listIds.add(it.id)
+                        }
+
+                        val adapterSpinner = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, displayNames)
+                        binding.spinnerTargetList.adapter = adapterSpinner
+
+                        val index = listIds.indexOf(currentListId)
+                        if (index >= 0) {
+                            binding.spinnerTargetList.setSelection(index)
+                        } else {
+                            binding.spinnerTargetList.setSelection(0)
+                        }
+                    }
                 }
             }
         }
@@ -120,6 +137,8 @@ class DictionaryFragment : Fragment(R.layout.fragment_dictionnary) {
     }
 
     private fun updateRecyclerView() {
+        if (_binding == null) return
+
         binding.btnEditList.visibility = if (currentListId == "all" || currentListId == "favorites") View.GONE else View.VISIBLE
 
         val filteredList = when (currentListId) {
@@ -142,6 +161,7 @@ class DictionaryFragment : Fragment(R.layout.fragment_dictionnary) {
                 val name = etListName.text.toString().trim()
                 val difficulty = ratingDifficulty.rating.toInt()
                 if (name.isNotEmpty()) {
+                    pendingSelectedListName = name
                     viewModel.addWordList(name, difficulty)
                     Toast.makeText(context, "Liste créée", Toast.LENGTH_SHORT).show()
                 } else {
@@ -197,6 +217,7 @@ class DictionaryFragment : Fragment(R.layout.fragment_dictionnary) {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        _binding?.spinnerTargetList?.onItemSelectedListener = null
         _binding = null
     }
 }
