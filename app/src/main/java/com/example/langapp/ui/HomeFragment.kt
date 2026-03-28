@@ -20,10 +20,14 @@ import com.example.langapp.viewmodel.ViewModelFactory
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
+// Héritage de Fragment avec le layout passé au constructeur pour alléger le code (remplace la surcharge de onCreateView)
 class HomeFragment : Fragment(R.layout.fragment_home) {
+
+    // Utilisation du pattern ViewBinding pour un accès sécurisé et typé aux vues du layout
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
 
+    // Partage du ViewModel à l'échelle de l'activité pour conserver l'état entre les différents fragments de l'application
     private val viewModel: MainViewModel by activityViewModels {
         ViewModelFactory((requireActivity().application as LangApp).firebaseManager)
     }
@@ -38,6 +42,8 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentHomeBinding.bind(view)
 
+        // Observation du pseudo via le StateFlow du ViewModel
+        // lifecycleScope est utilisé pour annuler automatiquement la coroutine à la destruction de la vue
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.pseudo.collect { pseudo ->
                 binding.tvWelcome.text = "Bienvenue, $pseudo !"
@@ -45,6 +51,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
+            // collectLatest annule l'exécution en cours si une nouvelle liste de mots est émise, optimisant les ressources
             viewModel.allWords.collectLatest { words ->
                 allWordsList = words
                 updateMaxWords()
@@ -66,6 +73,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                     listIds.add(it.id)
                 }
 
+                // Configuration d'un adaptateur natif pour lier les données textuelles au menu déroulant (Spinner)
                 val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, displayNames)
                 binding.spinnerLists.adapter = adapter
             }
@@ -95,6 +103,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         }
 
         binding.btnStartQuiz.setOnClickListener {
+            // Validation préventive empêchant le lancement d'un quiz sur une liste vide
             if (maxWordsForSelectedList == 0) {
                 Toast.makeText(context, "Cette liste ne contient aucun mot", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
@@ -105,14 +114,17 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         }
 
         binding.btnLogout.setOnClickListener {
+            // Utilisation des SharedPreferences pour persister la déconnexion localement de manière synchrone
             val sharedPref = requireActivity().getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
             sharedPref.edit().remove("PSEUDO").apply()
 
             viewModel.setPseudo("")
+            // Utilisation du composant Navigation d'Android Jetpack pour gérer les transitions de manière déclarative
             findNavController().navigate(R.id.loginFragment)
         }
     }
 
+    // Méthode de synchronisation pour s'assurer que l'utilisateur ne demande pas plus de mots qu'il n'y en a
     private fun updateMaxWords() {
         val selectedIndex = binding.spinnerLists.selectedItemPosition
         val selectedListId = if (selectedIndex >= 0 && listIds.isNotEmpty()) listIds[selectedIndex] else "all"
@@ -143,6 +155,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             else -> allListsData.find { it.id == selectedListId }?.name ?: "Toutes les listes"
         }
 
+        // Transmission des paramètres du quiz via un Bundle à l'aide de l'API de Navigation
         val bundle = Bundle().apply {
             putString("direction", direction)
             putString("listId", selectedListId)
@@ -153,6 +166,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         findNavController().navigate(R.id.quizFragment, bundle)
     }
 
+    // Libération de la mémoire allouée au ViewBinding pour éviter les fuites de mémoire (Memory Leaks) lors de la destruction de la vue
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null

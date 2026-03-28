@@ -24,10 +24,15 @@ import com.example.langapp.viewmodel.ViewModelFactory
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
+// Injection directe du layout dans le constructeur du Fragment pour éviter d'override onCreateView
 class DictionaryFragment : Fragment(R.layout.fragment_dictionnary) {
+
+    // Utilisation du ViewBinding pour la sécurité des types et éviter la nullité ou les findViewById coûteux
     private var _binding: FragmentDictionnaryBinding? = null
     private val binding get() = _binding!!
 
+    // Partage de l'instance du ViewModel à l'échelle de l'activité (activityViewModels)
+    // Cela permet aux différents fragments de partager le même état et les mêmes données
     private val viewModel: MainViewModel by activityViewModels {
         ViewModelFactory((requireActivity().application as LangApp).firebaseManager)
     }
@@ -44,6 +49,8 @@ class DictionaryFragment : Fragment(R.layout.fragment_dictionnary) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentDictionnaryBinding.bind(view)
 
+        // Initialisation de l'adaptateur du RecyclerView avec des lambdas pour gérer les actions (suppression/favoris)
+        // Cela maintient la logique dans le fragment/ViewModel plutôt que dans l'adaptateur
         adapterWords = WordAdapter(
             onDelete = { word -> viewModel.deleteWord(word) },
             onFavoriteClick = { word -> viewModel.toggleFavorite(word) }
@@ -51,9 +58,14 @@ class DictionaryFragment : Fragment(R.layout.fragment_dictionnary) {
         binding.rvWords.layoutManager = LinearLayoutManager(requireContext())
         binding.rvWords.adapter = adapterWords
 
+        // Lancement des coroutines liées au cycle de vie de la vue
         viewLifecycleOwner.lifecycleScope.launch {
+            // repeatOnLifecycle garantit que la collecte des flux (Flow) s'arrête
+            // lorsque le fragment n'est plus visible (ex: mis en arrière-plan) pour préserver les ressources
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch {
+                    // collectLatest permet d'annuler le traitement de la valeur précédente
+                    // si une nouvelle valeur est émise rapidement, optimisant ainsi les performances
                     viewModel.allWords.collectLatest { words ->
                         allWordsList = words
                         updateRecyclerView()
@@ -70,6 +82,7 @@ class DictionaryFragment : Fragment(R.layout.fragment_dictionnary) {
                         displayNames.add("Toutes les listes")
                         listIds.add("all")
 
+                        // Logique de sélection automatique d'une liste venant d'être créée
                         if (pendingSelectedListName != null) {
                             val newList = lists.find { it.name == pendingSelectedListName }
                             if (newList != null) {
@@ -87,6 +100,7 @@ class DictionaryFragment : Fragment(R.layout.fragment_dictionnary) {
                             listIds.add(it.id)
                         }
 
+                        // Utilisation d'un adaptateur natif simple pour le Spinner (menu déroulant)
                         val adapterSpinner = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, displayNames)
                         binding.spinnerTargetList.adapter = adapterSpinner
 
@@ -121,6 +135,7 @@ class DictionaryFragment : Fragment(R.layout.fragment_dictionnary) {
             val en = binding.etEn.text.toString().trim()
             val fr = binding.etFr.text.toString().trim()
 
+            // Vérification de validation côté client avant l'appel au ViewModel
             if (currentListId == "all" || currentListId == "favorites") {
                 Toast.makeText(context, "Veuillez sélectionner une liste spécifique", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
@@ -136,6 +151,7 @@ class DictionaryFragment : Fragment(R.layout.fragment_dictionnary) {
         }
     }
 
+    // Filtrage effectué localement pour éviter de faire des requêtes réseau inutiles à chaque changement de filtre
     private fun updateRecyclerView() {
         if (_binding == null) return
 
@@ -146,9 +162,13 @@ class DictionaryFragment : Fragment(R.layout.fragment_dictionnary) {
             "favorites" -> allWordsList.filter { it.isFavorite }
             else -> allWordsList.filter { it.listId == currentListId }
         }
+        // submitList (issu de ListAdapter) gère de manière asynchrone le calcul des différences (DiffUtil)
+        // et anime proprement les changements dans le RecyclerView
         adapterWords.submitList(filteredList)
     }
 
+    // Construction dynamique d'une modale AlertDialog pour la création de liste
+    // Évite la création d'un Fragment entier pour une simple saisie de données
     private fun showCreateListDialog() {
         val dialogView = layoutInflater.inflate(R.layout.dialog_create_list, null)
         val etListName = dialogView.findViewById<EditText>(R.id.etListName)
@@ -215,6 +235,8 @@ class DictionaryFragment : Fragment(R.layout.fragment_dictionnary) {
             .show()
     }
 
+    // Libération impérative du binding lors de la destruction de la vue
+    // Évite les fuites de mémoire (Memory Leaks) courantes avec les fragments
     override fun onDestroyView() {
         super.onDestroyView()
         _binding?.spinnerTargetList?.onItemSelectedListener = null

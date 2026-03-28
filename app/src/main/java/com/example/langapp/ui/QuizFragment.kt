@@ -1,3 +1,5 @@
+// Emplacement : codingt0m/langapp/LangApp-ffae75213ec4e325161e96d7412b21eb86381be5/app/src/main/java/com/example/langapp/ui/QuizFragment.kt
+
 package com.example.langapp.ui
 
 import android.app.AlertDialog
@@ -24,10 +26,14 @@ import java.text.Normalizer
 import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 
+// Héritage de Fragment en passant le layout en paramètre pour simplifier l'instanciation
 class QuizFragment : Fragment(R.layout.fragment_quiz) {
+
+    // Utilisation de ViewBinding pour lier les éléments de l'interface graphique de manière sûre et typée
     private var _binding: FragmentQuizBinding? = null
     private val binding get() = _binding!!
 
+    // Partage de l'instance du ViewModel avec l'activité hôte pour conserver l'état et communiquer avec la base de données
     private val viewModel: MainViewModel by activityViewModels {
         ViewModelFactory((requireActivity().application as LangApp).firebaseManager)
     }
@@ -44,11 +50,14 @@ class QuizFragment : Fragment(R.layout.fragment_quiz) {
 
     private var isQcmMode = false
     private var selectedQcmAnswer = ""
+
+    // Initialisation paresseuse (lazy) de la liste des boutons pour optimiser l'allocation mémoire au démarrage
     private val choiceButtons by lazy {
         listOf(binding.btnChoice1, binding.btnChoice2, binding.btnChoice3, binding.btnChoice4)
     }
 
     private var countDownTimer: CountDownTimer? = null
+    // Utilisation d'une constante pour définir le temps limite par question, facilitant les futures modifications
     private val TIME_LIMIT_MS = 15000L
     private var timeRemainingMs = TIME_LIMIT_MS
     private var totalSessionDurationMs = 0L
@@ -57,6 +66,7 @@ class QuizFragment : Fragment(R.layout.fragment_quiz) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentQuizBinding.bind(view)
 
+        // Récupération sécurisée des arguments passés via le composant de Navigation
         direction = arguments?.getString("direction") ?: "EN_FR"
         val listId = arguments?.getString("listId") ?: "all"
         val wordCount = arguments?.getInt("wordCount") ?: 10
@@ -65,6 +75,7 @@ class QuizFragment : Fragment(R.layout.fragment_quiz) {
         binding.btnValidate.isEnabled = false
         binding.tvStreak.text = "Série : $currentStreak"
 
+        // Exécution asynchrone pour la récupération des mots afin de ne pas bloquer le thread principal (UI Thread)
         viewLifecycleOwner.lifecycleScope.launch {
             words = viewModel.getQuizWords(listId, wordCount)
             originalWords = words.toList()
@@ -82,12 +93,13 @@ class QuizFragment : Fragment(R.layout.fragment_quiz) {
         }
 
         binding.btnAbandon.setOnClickListener {
-            countDownTimer?.cancel()
+            countDownTimer?.cancel() // Annulation explicite du timer pour éviter des fuites ou des exécutions inattendues
             Toast.makeText(context, "Session abandonnée", Toast.LENGTH_SHORT).show()
             findNavController().popBackStack()
         }
     }
 
+    // Gestion de la logique d'affichage adaptative selon le mode de jeu (Classique vs QCM)
     private fun showNextWord() {
         if (words.isEmpty()) return
 
@@ -108,6 +120,7 @@ class QuizFragment : Fragment(R.layout.fragment_quiz) {
             binding.progressBar.max = words.size
             binding.progressBar.progress = currentIndex
 
+            // Implémentation conditionnelle du layout selon le mode QCM
             if (isQcmMode) {
                 binding.textInputLayout.visibility = View.GONE
                 binding.qcmLayout.visibility = View.VISIBLE
@@ -116,6 +129,7 @@ class QuizFragment : Fragment(R.layout.fragment_quiz) {
 
                 val correctAnswer = if (direction == "EN_FR") currentWord.fr else currentWord.en
 
+                // Génération des mauvaises réponses en piochant aléatoirement dans le ViewModel global
                 val pool = viewModel.allWords.value
                     .filter { if (direction == "EN_FR") it.fr != correctAnswer else it.en != correctAnswer }
                     .map { if (direction == "EN_FR") it.fr else it.en }
@@ -124,6 +138,7 @@ class QuizFragment : Fragment(R.layout.fragment_quiz) {
 
                 val wrongAnswers = pool.take(3).toMutableList()
 
+                // Mécanisme de secours (fallback) si la base de données ne contient pas assez de mots pour le QCM
                 var fallbackIndex = 1
                 while (wrongAnswers.size < 3) {
                     val fallbackWord = if (direction == "EN_FR") "Option $fallbackIndex" else "Choice $fallbackIndex"
@@ -142,6 +157,7 @@ class QuizFragment : Fragment(R.layout.fragment_quiz) {
                     button.isEnabled = true
                     button.setOnClickListener {
                         selectedQcmAnswer = options[index]
+                        // Feedback visuel basique sur la sélection du bouton
                         choiceButtons.forEach { b ->
                             b.alpha = 0.5f
                             b.isEnabled = false
@@ -164,6 +180,7 @@ class QuizFragment : Fragment(R.layout.fragment_quiz) {
         }
     }
 
+    // Utilisation de la classe native CountDownTimer pour la gestion du temps de réponse
     private fun startTimer() {
         countDownTimer = object : CountDownTimer(TIME_LIMIT_MS, 1000) {
             override fun onTick(millisUntilFinished: Long) {
@@ -206,6 +223,7 @@ class QuizFragment : Fragment(R.layout.fragment_quiz) {
         binding.btnValidate.setOnClickListener { showNextWord() }
     }
 
+    // Fonction d'extension Kotlin pour normaliser les chaînes et ignorer les accents lors de la validation
     private fun String.removeAccents(): String {
         val normalized = Normalizer.normalize(this, Normalizer.Form.NFD)
         return "\\p{InCombiningDiacriticalMarks}+".toRegex().replace(normalized, "")
@@ -237,6 +255,7 @@ class QuizFragment : Fragment(R.layout.fragment_quiz) {
             binding.tvFeedback.text = getString(R.string.correct_answer)
             binding.tvFeedback.setTextColor(Color.parseColor("#4CAF50"))
 
+            // Intégration d'une librairie tierce (Konfetti) pour améliorer l'UX (Gamification)
             val party = Party(
                 speed = 0f,
                 maxSpeed = 30f,
@@ -253,6 +272,7 @@ class QuizFragment : Fragment(R.layout.fragment_quiz) {
             binding.btnValidate.text = if (currentIndex < words.size) getString(R.string.next) else getString(R.string.finish)
             binding.btnValidate.setOnClickListener { showNextWord() }
 
+            // Tolérance aux fautes de frappe mineures : répond à l'exigence des "essais multiples"
         } else if (!isQcmMode && !hasUsedAlmostCorrect && isAlmostCorrect(userAnswer, correctAnswer)) {
             hasUsedAlmostCorrect = true
             currentStreak = 0
@@ -276,12 +296,14 @@ class QuizFragment : Fragment(R.layout.fragment_quiz) {
         binding.tvStreak.text = "Série : $currentStreak"
     }
 
+    // Algorithme de calcul de distance (type Levenshtein simplifié) pour déterminer si la réponse est "presque" correcte
     private fun isAlmostCorrect(userAnswer: String, correctAnswer: String): Boolean {
         val a = userAnswer.lowercase()
         val b = correctAnswer.lowercase()
 
         if (a == b) return false
 
+        // Tolérance : une lettre différente ou une inversion de deux lettres adjacentes
         if (a.length == b.length) {
             val diffs = mutableListOf<Int>()
             for (i in a.indices) {
@@ -297,6 +319,7 @@ class QuizFragment : Fragment(R.layout.fragment_quiz) {
             }
         }
 
+        // Tolérance : un caractère manquant ou en trop
         if (abs(a.length - b.length) == 1) {
             val shorter = if (a.length < b.length) a else b
             val longer = if (a.length > b.length) a else b
@@ -323,11 +346,13 @@ class QuizFragment : Fragment(R.layout.fragment_quiz) {
     private fun endSession() {
         val durationInSeconds = (totalSessionDurationMs / 1000).toInt()
 
+        // Sauvegarde de l'historique uniquement si ce n'est pas une session de révision (pour ne pas fausser les stats globales)
         if (!isReviewSession) {
             val listName = arguments?.getString("listName") ?: "Toutes les listes"
             viewModel.saveSession(listName, score, words.size, durationInSeconds)
         }
 
+        // Flux de navigation additionnel proposant de revoir spécifiquement les erreurs commises
         if (wrongWords.isNotEmpty()) {
             AlertDialog.Builder(requireContext())
                 .setTitle(getString(R.string.session_finished))
@@ -347,6 +372,7 @@ class QuizFragment : Fragment(R.layout.fragment_quiz) {
         }
     }
 
+    // Réinitialisation des variables d'état pour la session de révision, sans recréer un nouveau fragment
     private fun startReviewSession() {
         words = wrongWords.toList()
         wrongWords.clear()
@@ -360,7 +386,7 @@ class QuizFragment : Fragment(R.layout.fragment_quiz) {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        countDownTimer?.cancel()
+        countDownTimer?.cancel() // Nettoyage final du timer pour prévenir les Memory Leaks
         _binding = null
     }
 }

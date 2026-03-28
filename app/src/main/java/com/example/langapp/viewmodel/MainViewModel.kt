@@ -1,3 +1,5 @@
+// Emplacement : codingt0m/langapp/LangApp-ffae75213ec4e325161e96d7412b21eb86381be5/app/src/main/java/com/example/langapp/viewmodel/MainViewModel.kt
+
 package com.example.langapp.viewmodel
 
 import android.util.Log
@@ -16,17 +18,28 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
+// Le ViewModel sert à séparer la logique de gestion des données de l'interface utilisateur.
+// Il a l'avantage de survivre aux changements de configuration (comme la rotation de l'écran).
 class MainViewModel(private val firebaseManager: FirebaseManager) : ViewModel() {
 
+    // Utilisation de StateFlow pour conserver et observer l'état actuel du pseudo.
+    // L'encapsulation stricte est respectée : _pseudo (Mutable) est privé pour empêcher les modifications externes,
+    // tandis que 'pseudo' expose publiquement une version en lecture seule.
     private val _pseudo = MutableStateFlow("")
     val pseudo: StateFlow<String> = _pseudo
 
+    // flatMapLatest écoute les changements du flux source (_pseudo).
+    // Si l'utilisateur change de pseudo, la requête Firebase précédente est immédiatement annulée pour lancer la nouvelle.
     @OptIn(ExperimentalCoroutinesApi::class)
     val allLists = _pseudo.flatMapLatest { p ->
         firebaseManager.getAllWordLists(p).map { lists ->
+            // Injection d'une liste virtuelle "Favoris" dans le flux de données pour centraliser cette fonctionnalité
+            // de manière transparente pour l'interface graphique.
             val favoris = WordList(id = "favorites", name = "Favoris", difficulty = 1)
             listOf(favoris) + lists
         }
+        // stateIn convertit le Flow "froid" en StateFlow "chaud".
+        // SharingStarted.Lazily permet d'économiser les ressources en ne démarrant l'observation que si la vue est active.
     }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -39,10 +52,13 @@ class MainViewModel(private val firebaseManager: FirebaseManager) : ViewModel() 
         firebaseManager.getAllSessions(p)
     }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
+    // Point d'entrée sécurisé pour modifier l'état interne du pseudo
     fun setPseudo(newPseudo: String) {
         _pseudo.value = newPseudo
     }
 
+    // Délégation systématique des opérations CRUD (Create, Read, Update, Delete) à FirebaseManager.
+    // Cela permet de découpler la logique métier de l'implémentation spécifique de la base de données.
     fun addWordList(name: String, difficulty: Int) {
         firebaseManager.addWordList(_pseudo.value, name, difficulty)
     }
@@ -63,6 +79,8 @@ class MainViewModel(private val firebaseManager: FirebaseManager) : ViewModel() 
         firebaseManager.saveSession(_pseudo.value, listName, score, total, duration)
     }
 
+    // Fonction marquée avec le mot-clé "suspend" indiquant une opération asynchrone (potentiellement longue).
+    // Elle ne bloquera pas le thread principal et devra être appelée depuis un contexte de coroutine.
     suspend fun getQuizWords(listId: String, limit: Int): List<Word> {
         return firebaseManager.getRandomWords(_pseudo.value, listId, limit)
     }
