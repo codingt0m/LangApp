@@ -45,7 +45,9 @@ class WordAdapter(
     }
 }
 
-class HistoryAdapter : ListAdapter<SessionHistory, HistoryAdapter.HistoryViewHolder>(HistoryDiffCallback()) {
+class HistoryAdapter(
+    private val onDeleteClick: (SessionHistory) -> Unit
+) : ListAdapter<SessionHistory, HistoryAdapter.HistoryViewHolder>(HistoryDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): HistoryViewHolder {
         return HistoryViewHolder(ItemHistoryBinding.inflate(LayoutInflater.from(parent.context), parent, false))
@@ -64,6 +66,10 @@ class HistoryAdapter : ListAdapter<SessionHistory, HistoryAdapter.HistoryViewHol
             binding.tvScore.text = "Score : ${session.score}/${session.total} ($percentage%)"
             binding.tvListName.text = "Liste : ${session.listName}"
             binding.tvDuration.text = "Durée : ${session.duration}s"
+
+            binding.btnDeleteSession.setOnClickListener {
+                onDeleteClick(session)
+            }
         }
     }
 

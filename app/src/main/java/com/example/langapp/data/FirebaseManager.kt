@@ -146,6 +146,10 @@ class FirebaseManager {
             .update(mapOf("name" to name, "difficulty" to difficulty))
     }
 
+    fun deleteSession(pseudo: String, sessionId: String) {
+        if (pseudo.isBlank()) return
+        db.collection("users").document(pseudo).collection("sessions").document(sessionId).delete()
+    }
     fun deleteWordList(pseudo: String, listId: String) {
         if (pseudo.isBlank()) return
         db.collection("users").document(pseudo).collection("wordLists").document(listId).delete()

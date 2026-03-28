@@ -116,7 +116,7 @@ class QuizFragment : Fragment(R.layout.fragment_quiz) {
 
                 val correctAnswer = if (direction == "EN_FR") currentWord.fr else currentWord.en
 
-                val pool = originalWords
+                val pool = viewModel.allWords.value
                     .filter { if (direction == "EN_FR") it.fr != correctAnswer else it.en != correctAnswer }
                     .map { if (direction == "EN_FR") it.fr else it.en }
                     .distinct()

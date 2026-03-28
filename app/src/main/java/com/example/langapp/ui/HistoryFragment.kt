@@ -2,6 +2,7 @@ package com.example.langapp.ui
 
 import android.os.Bundle
 import android.view.View
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
@@ -10,6 +11,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.langapp.LangApp
 import com.example.langapp.R
+import com.example.langapp.data.SessionHistory
 import com.example.langapp.databinding.FragmentHistoryBinding
 import com.example.langapp.viewmodel.MainViewModel
 import com.example.langapp.viewmodel.ViewModelFactory
@@ -28,7 +30,10 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentHistoryBinding.bind(view)
 
-        val adapter = HistoryAdapter()
+        val adapter = HistoryAdapter { session ->
+            confirmDeleteSession(session)
+        }
+
         binding.rvHistory.layoutManager = LinearLayoutManager(requireContext())
         binding.rvHistory.adapter = adapter
 
@@ -48,6 +53,17 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
                 }
             }
         }
+    }
+
+    private fun confirmDeleteSession(session: SessionHistory) {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Supprimer la session ?")
+            .setMessage("Voulez-vous vraiment supprimer cette session de votre historique ?")
+            .setPositiveButton("Oui") { _, _ ->
+                viewModel.deleteSession(session)
+            }
+            .setNegativeButton("Annuler", null)
+            .show()
     }
 
     override fun onDestroyView() {
